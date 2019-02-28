@@ -15,17 +15,15 @@ exports.getAddProduct = (req, res, next) => {
 exports.postAddProduct = (req, res, next) => {
     const title = req.body.title;
     const price = req.body.price;
-    const userId = req.user._id;
     const imageUrl = req.body.imageUrl;
     const description = req.body.description;
-    const product = new Product(
-        title,
-        price,
-        imageUrl,
-        description,
-        null,
-        userId
-    );
+    const product = new Product({
+        title: title,
+        price: price,
+        imageUrl: imageUrl,
+        description: description,
+        userId: req.user._id
+    });
 
     product
         .save()
@@ -45,9 +43,7 @@ exports.getEditProduct = (req, res, next) => {
         return res.redirect('/');
     }
     const prodId = req.params.productId;
-    // First method
-    // req.user.getProducts({where: { id: prodId } })
-    // Second method
+
     Product
         .findById(prodId)
         .then((product) => {
@@ -72,17 +68,17 @@ exports.postEditProduct = (req, res, next) => {
     const updatedPrice = req.body.price;
     const updatedImageUrl = req.body.imageUrl;
     const updatedDescription = req.body.description;
-    
-    const product = new Product(
-        updatedTitle,
-        updatedPrice,
-        updatedImageUrl,
-        updatedDescription,
-        new ObjectId(prodId)
-    );
 
-    product
-        .save() 
+    Product
+        .findById(prodId)
+        .then(product => {
+            product.title = updatedTitle;
+            product.price = updatedPrice;
+            product.imageUrl = updatedImageUrl;
+            product.description = updatedDescription;
+
+            return product.save() 
+        })
         .then(result => {
             console.log('Updated product');
             res.redirect('/admin/products');
@@ -98,7 +94,7 @@ exports.postDeleteProduct = (req, res, next) => {
 
     // First method
     Product
-        .deleteById(prodId)
+        .findByIdAndRemove(prodId)
         .then(() => {
             res.redirect('/admin/products');
         })
@@ -106,17 +102,17 @@ exports.postDeleteProduct = (req, res, next) => {
 };
 
 exports.getProducts = (req, res, next) => {
-    // First method
-    // req.user.getProducts()
-    // second method
-    Product.fetchAll()
+    Product
+        .find()
+        // If i want exclude some fields from object
+        // .select('title price -_id')
+        // .populate('userId', 'name')
         .then(products => {
             res.render('admin/products', {
                 prods: products,
                 pageTitle: 'Admin Products',
                 path: '/admin/products',
             });
-
         })
         .catch(err => {
             console.log(err);
