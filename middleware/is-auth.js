@@ -1,7 +1,6 @@
 module.exports = (req, res, next) => {
     if (!req.session.isLoggedIn) {
-        return res.status.redirect('/login');
+        return res.redirect('/login');
     }
-
     next();
 }
